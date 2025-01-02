@@ -3,8 +3,14 @@ import 'package:get/get.dart';
 import '../controllers/product_controller.dart';
 import 'product_detail_page.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   final ProductController productController = Get.put(ProductController());
+  String searchText = '';
 
   @override
   Widget build(BuildContext context) {
@@ -27,13 +33,38 @@ class HomePage extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
-          
+          // Search Bar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: TextField(
+              onChanged: (value) {
+                setState(() {
+                  searchText = value.toLowerCase();
+                });
+              },
+              decoration: InputDecoration(
+                labelText: 'Cari Produk',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.search),
+              ),
+            ),
+          ),
+          SizedBox(height: 10),
           // List Produk
           Expanded(
             child: Obx(() {
               if (productController.isLoading.value) {
                 return Center(child: CircularProgressIndicator());
               } else {
+                // Filter produk berdasarkan pencarian
+                var filteredProducts = productController.productList.where((product) {
+                  return product.title.toLowerCase().contains(searchText);
+                }).toList();
+
+                if (filteredProducts.isEmpty) {
+                  return Center(child: Text('Produk tidak ditemukan.'));
+                }
+
                 return GridView.builder(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
@@ -42,9 +73,9 @@ class HomePage extends StatelessWidget {
                     childAspectRatio: 0.7,
                   ),
                   padding: EdgeInsets.all(10),
-                  itemCount: productController.productList.length,
+                  itemCount: filteredProducts.length,
                   itemBuilder: (context, index) {
-                    var product = productController.productList[index];
+                    var product = filteredProducts[index];
                     return Card(
                       elevation: 5,
                       child: Column(
